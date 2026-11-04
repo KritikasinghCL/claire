@@ -1,0 +1,257 @@
+{
+  "step": "step1_profile_and_reconciled_demand",
+  "generated_by": "Arjun — Data Steward, Inventory & Forecasting Cell",
+  "generated_at_utc": "2026-11-04T17:30:00Z",
+  "source": {
+    "system": "SAP HANA Cloud (read-only)",
+    "host": "a90cbb14-5ad3-48af-ba3b-f6042c94f8bd.hna0.prod-us10.hanacloud.ondemand.com",
+    "schema": "VEDANTA_POC",
+    "tables_discovered": 42,
+    "access": "SELECT only; no value in HANA was altered by this step"
+  },
+  "scope": {
+    "material_type_in": ["ZSPR", "ZSPN"],
+    "is_backcast_period": "N",
+    "period_from": "2024-01-01",
+    "period_to": "2025-12-31",
+    "as_of_date": "2025-12-31",
+    "fiscal_year": "Apr-Mar",
+    "default_measure": "QTY (base UoM)",
+    "value_measure": "INR, only when the Qty/Value toggle is set to Value"
+  },
+  "profile": {
+    "materials_in_scope": 6000,
+    "material_types_present_in_dim": ["ZSPN", "ZSPR"],
+    "material_groups_in_scope": 12,
+    "criticality_values": ["VITAL", "ESSENTIAL", "DESIRABLE"],
+    "plants": ["HZL_DEMO_01", "HZL_DEMO_02", "HZL_DEMO_03", "HZL_DEMO_04", "HZL_DEMO_05", "HZL_DEMO_06"],
+    "plant_rollup_row": "ALL_PLANTS — present in DIM_PLANT and in INVENTORY_KPI_MONTHLY; it is a pre-aggregated rollup, NOT a physical plant. Exclude it from any plant-level sum or it double-counts.",
+    "material_plant_pairs_with_261_262_in_period": 34713,
+    "material_plant_pairs_in_INVENTORY_CLASSIFICATION": 34717,
+    "material_plant_pairs_in_MATERIAL_PLANT_CLASSIFICATION": 34717,
+    "pairs_in_classification_with_no_movement_in_period": 4,
+    "materials_with_any_demand_in_period": 6000,
+    "reorder_recommendation_rows": 3916,
+    "movement_fact_total_rows_all_partitions": 1664301,
+    "movement_fact_posting_range_all_partitions": "2023-01-12 .. 2025-12-31",
+    "movement_fact_backcast_rows": 132526,
+    "snapshot_fact_partitions": 3,
+    "curated_as_of_dates": {
+      "INVENTORY_CLASSIFICATION": ["2025-12-31"],
+      "REORDER_RECOMMENDATION": ["2025-12-31"]
+    },
+    "months_in_grain": 24,
+    "grain_rows_expected": "34,713 material-plant pairs x up to 24 months"
+  },
+  "schema_traps": [
+    {
+      "trap": "FACT_MATERIAL_MOVEMENT is split into 4 partitions (PART_001..004) ordered by POSTING_DATE, 500k/500k/500k/164,301 rows.",
+      "evidence": "PART_001 alone covers only 2023-01-12..2024-07-19. Querying it alone silently drops 17 of the 24 in-scope months.",
+      "action": "Always UNION ALL all four partitions."
+    },
+    {
+      "trap": "FACT_INVENTORY_SNAPSHOT is split into 3 partitions (PART_001..003).",
+      "evidence": "PART_001 covers 2023-01-31..2024-03-31 only; the 2025-12-31 snapshot is not in it.",
+      "action": "Always UNION ALL all three partitions."
+    },
+    {
+      "trap": "Every column of DIM_MATERIAL, DIM_PLANT and the FACT_* tables is NVARCHAR, including QUANTITY, CLOSING_QTY and UNIT_COST_INR.",
+      "evidence": "SYS.TABLE_COLUMNS reports DATA_TYPE_NAME='NVARCHAR' for all of them; only the CURATED tables carry DECIMAL/DATE.",
+      "action": "Cast with TO_DECIMAL(col,18,3) before any arithmetic, and TO_DATE() before any date maths. String comparison on 'YYYY-MM-DD' is safe for BETWEEN filters."
+    },
+    {
+      "trap": "IS_BACKCAST_PERIOD='Y' rows exist only in movement PART_001 (132,526 rows, all pre-2024).",
+      "evidence": "GROUP BY partition shows BACKCAST_Y = 132,526 / 0 / 0 / 0.",
+      "action": "The IS_BACKCAST_PERIOD='N' filter is mandatory but affects only the 2023 tail."
+    },
+    {
+      "trap": "'TOP' is a reserved word in HANA and cannot be used as a CTE alias.",
+      "evidence": "WITH ... TOP AS (...) returned a syntax error; renaming the CTE to SEL ran identically.",
+      "action": "Avoid TOP/SELECT-keyword aliases in generated SQL."
+    },
+    {
+      "trap": "DATA_DICTIONARY holds only 14 rows — it documents a sample of columns, not the full schema.",
+      "evidence": "SELECT COUNT(*) FROM VEDANTA_POC.DATA_DICTIONARY = 14 across 42 tables.",
+      "action": "Resolve column names from SYS.TABLE_COLUMNS, not from DATA_DICTIONARY."
+    }
+  ],
+  "demand_definition": {
+    "measure": "NET_DEMAND = SUM(MovType 261 qty) - SUM(MovType 262 qty)",
+    "unit": "base UoM quantity",
+    "grain": "MATERIAL_ID x PLANT_ID x POSTING_MONTH",
+    "sql_file": "step1/sql/step1_demand_material_plant_month.sql",
+    "method": "aggregate SQL with GROUP BY only; no row-level extract was pulled",
+    "in_scope_movement_totals": {
+      "261": {"lines": 1317733, "qty": 3167766.25},
+      "262": {"lines": 75513, "qty": 79397.0},
+      "net_demand_qty_total": 3088369.25,
+      "other_types_present_not_demand": {
+        "101": {"lines": 130567, "qty": 2661219.97, "meaning": "GR against PO"},
+        "102": {"lines": 4534, "qty": 13905.34, "meaning": "GR reversal"},
+        "701": {"lines": 1606, "qty": 3227.39, "meaning": "physical-inventory gain"},
+        "702": {"lines": 1822, "qty": 3469.33, "meaning": "physical-inventory loss"}
+      }
+    }
+  },
+  "reconciliation": {
+    "as_of": "2025-12-31",
+    "sql_file": "step1/sql/step1_reconciliation.sql",
+    "policy": "CURATED / RAW / Diff / Diff% shown for every item; nothing suppressed.",
+    "items": [
+      {
+        "id": "R1",
+        "item": "Gross inventory QTY (base UoM), 6 physical plants",
+        "curated_source": "INVENTORY_CLASSIFICATION.AVAILABLE_QTY",
+        "raw_source": "FACT_INVENTORY_SNAPSHOT_PART_001..003.CLOSING_QTY",
+        "curated": 852059.1,
+        "raw": 852059.1,
+        "diff": 0.0,
+        "diff_pct": 0.0,
+        "status": "MATCH",
+        "by_plant": [
+          {"plant": "HZL_DEMO_01", "curated_qty": 147723.0, "raw_qty": 147723.0, "diff": 0.0, "diff_pct": 0.0},
+          {"plant": "HZL_DEMO_02", "curated_qty": 139630.5, "raw_qty": 139630.5, "diff": 0.0, "diff_pct": 0.0},
+          {"plant": "HZL_DEMO_03", "curated_qty": 125535.3, "raw_qty": 125535.3, "diff": 0.0, "diff_pct": 0.0},
+          {"plant": "HZL_DEMO_04", "curated_qty": 144996.4, "raw_qty": 144996.4, "diff": 0.0, "diff_pct": 0.0},
+          {"plant": "HZL_DEMO_05", "curated_qty": 172972.1, "raw_qty": 172972.1, "diff": 0.0, "diff_pct": 0.0},
+          {"plant": "HZL_DEMO_06", "curated_qty": 121201.8, "raw_qty": 121201.8, "diff": 0.0, "diff_pct": 0.0}
+        ]
+      },
+      {
+        "id": "R1b",
+        "item": "Gross inventory VALUE INR (Value toggle), 6 physical plants",
+        "curated_source": "INVENTORY_CLASSIFICATION.INVENTORY_VALUE_INR and INVENTORY_KPI_MONTHLY.GROSS_INVENTORY_VALUE_INR @ 2025-12",
+        "raw_source": "CLOSING_QTY x DIM_MATERIAL.UNIT_COST_INR",
+        "curated": 5125222947.0,
+        "raw": 5125222947.0,
+        "diff": 0.0,
+        "diff_pct": 0.0,
+        "status": "MATCH",
+        "note": "INVENTORY_KPI_MONTHLY also carries a PLANT_ID='ALL_PLANTS' row of 5,125,222,947 INR which equals the sum of the six plants exactly. It is a rollup, not a seventh plant — summing all seven PLANT_ID values double-counts to 10.25 bn."
+      },
+      {
+        "id": "R1c",
+        "item": "Inventory line count (material-plant SKU lines)",
+        "curated": 34717,
+        "raw": 34717,
+        "diff": 0,
+        "diff_pct": 0.0,
+        "status": "MATCH"
+      },
+      {
+        "id": "R2",
+        "item": "Movement line counts in scope, 2024-01..2025-12",
+        "curated_source": "none — no curated movement table exists in VEDANTA_POC",
+        "raw_source": "FACT_MATERIAL_MOVEMENT_PART_001..004",
+        "curated": null,
+        "raw": {"261": 1317733, "262": 75513, "101": 130567, "102": 4534, "702": 1822, "701": 1606, "total": 1531775},
+        "diff": null,
+        "diff_pct": null,
+        "status": "RAW_ONLY",
+        "note": "Reported as RAW baseline; there is no curated counterpart to differ from."
+      },
+      {
+        "id": "R3",
+        "item": "Movement-class counts (ACTIVE / SLOW_MOVING / NON_MOVING / OBSOLETE)",
+        "curated_source": "INVENTORY_CLASSIFICATION.MOVEMENT_CLASS @ 2025-12-31",
+        "raw_source": "recomputed from last MovType-261 date per material-plant using the brief's thresholds",
+        "status": "DIFFERENCE — 1,199 lines (3.45% of 34,717)",
+        "by_class": [
+          {"class": "ACTIVE", "curated": 18723, "raw": 18723, "diff": 0, "diff_pct": 0.0},
+          {"class": "SLOW_MOVING", "curated": 9196, "raw": 9196, "diff": 0, "diff_pct": 0.0},
+          {"class": "NON_MOVING", "curated": 2934, "raw": 4133, "diff": -1199, "diff_pct": -29.01},
+          {"class": "OBSOLETE", "curated": 3864, "raw": 2665, "diff": 1199, "diff_pct": 44.99}
+        ],
+        "root_cause": "The curated table classifies 1,195 lines as OBSOLETE whose own DAYS_SINCE_LAST_CONSUMPTION is in the 181-365 bucket — i.e. NON_MOVING under the brief's rule. The curated age column itself agrees with RAW on 100% of those 1,195 lines (DSLC_MATCHES_RAW = 1,195/1,195), so the ageing is identical and only the NM/OBS cut-point differs: the curated rule applies a threshold below 365 days. A further 4 lines are classified OBSOLETE with no 261 movement ever; the brief's rule makes never-issued = NON_MOVING. 1,195 + 4 = 1,199.",
+        "impact": "ACTIVE and SLOW_MOVING are unaffected, so the SMI KPI is safe. NMI and the Obsolete KPI shift materially depending on which rule is used.",
+        "resolution": "Dashboard must compute NM/SM/OBS from the brief's rule (RAW) and display the CURATED figure alongside it with this warning. Neither value is altered in HANA."
+      },
+      {
+        "id": "R4",
+        "item": "Reorder point (ROP), 34,717 material-plant lines",
+        "curated_source": "INVENTORY_CLASSIFICATION.REORDER_POINT_QTY",
+        "raw_source": "trailing-12m net demand / 365 x DIM_MATERIAL.PLANNED_DELIVERY_DAYS + curated SAFETY_STOCK_QTY",
+        "curated": 602102.3,
+        "raw": 624047.7,
+        "diff": -21945.4,
+        "diff_pct": -3.64,
+        "status": "DIFFERENCE — within tolerance in aggregate, not line by line",
+        "lines_within_20pct_tolerance": 16340,
+        "lines_outside_20pct_tolerance": 18377,
+        "root_cause": "Two drivers. (a) Lead time: the RAW recomputation uses PLANNED_DELIVERY_DAYS only, while the brief's rule is MAX(planned, actual) + median PR-to-PO — so the RAW ROP here is a lower bound and the true figure will move once actual lead time and PR-to-PO latency are joined in. (b) Demand basis: curated TRAILING_12M_DEMAND_QTY matches ISSUES-ONLY (261) on 25,925 of 34,717 lines but NET (261-262) on only 18,927 — the curated trailing demand is closer to a gross-issues measure than to the brief's net definition. Curated T12 sum 2,091,095.4 vs RAW net 1,770,896.3 (diff -320,199.1, -15.3%) vs RAW issues-only 1,815,618.3 (diff -275,477.1, -13.2%). Neither matches exactly, so a third adjustment (likely a different 12-month window or a backcast inclusion) is also present.",
+        "resolution": "The dashboard's ROP must be recomputed from RAW once actual lead time and median PR-to-PO are available (step 2); the +/-20% ROP flag is driven off that recomputation. Curated ROP is shown as the SAP-master comparison column."
+      }
+    ],
+    "summary": {
+      "items_checked": 6,
+      "match": 3,
+      "difference": 2,
+      "raw_only": 1,
+      "uncomputable": 1
+    }
+  },
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "MOVEMENT_CLASS_RULE_MISMATCH",
+      "message": "CURATED movement class disagrees with the brief's rule on 1,199 of 34,717 lines (3.45%): 1,195 NM-aged lines are flagged OBSOLETE and 4 never-issued lines are flagged OBSOLETE rather than NON_MOVING. NMI and Obsolete KPIs are affected; ACTIVE and SLOW_MOVING are not."
+    },
+    {
+      "severity": "warn",
+      "code": "ROP_BASIS_MISMATCH",
+      "message": "Curated ROP is 3.64% below a RAW recomputation, and only 16,340 of 34,717 lines agree within +/-20%. Curated trailing-12m demand behaves like gross 261 issues rather than net 261-262. Do not treat curated ROP as the brief's ROP."
+    },
+    {
+      "severity": "warn",
+      "code": "ALL_PLANTS_ROLLUP_ROW",
+      "message": "PLANT_ID='ALL_PLANTS' exists in DIM_PLANT and INVENTORY_KPI_MONTHLY as a pre-aggregated rollup equal to the sum of the six physical plants. Every plant filter and sum must exclude it."
+    },
+    {
+      "severity": "info",
+      "code": "FOUR_PAIRS_NO_MOVEMENT",
+      "message": "4 of the 34,717 classified material-plant pairs have no 261 movement at all in or before the period. They are never-issued and must be classed NON_MOVING per the brief."
+    },
+    {
+      "severity": "info",
+      "code": "LUBRICANTS_SPARSE",
+      "message": "Material group LUBRICANTS has months with no 261/262 movement at all; its series carries nulls rather than zeros in step1/aggregates/type_group_month.json. Forecasting must treat the gap explicitly, not impute it."
+    }
+  ],
+  "uncomputable": [
+    {
+      "item": "Lead time = MAX(planned, actual) + median PR-to-PO",
+      "reason": "Only DIM_MATERIAL.PLANNED_DELIVERY_DAYS was resolved in this step. Actual lead time needs FACT_GOODS_RECEIPT joined to FACT_PURCHASE_ORDER, and median PR-to-PO needs FACT_PURCHASE_REQUISITION joined to FACT_PURCHASE_ORDER — and both PR and PO exist in a base and a _V2 variant whose precedence is not yet established. Deferred to step 2 rather than guessed. Every ROP figure in this file is therefore a planned-lead-time lower bound and is labelled as such."
+    }
+  ],
+  "aggregates_index": {
+    "criticality_month.json": {
+      "path": "step1/aggregates/criticality_month.json",
+      "grain": "CRITICALITY x POSTING_MONTH",
+      "entries": 3,
+      "bytes": 1266
+    },
+    "plant_month.json": {
+      "path": "step1/aggregates/plant_month.json",
+      "grain": "PLANT_ID x POSTING_MONTH",
+      "entries": 144,
+      "bytes": 8352
+    },
+    "top_material_plant_series.json": {
+      "path": "step1/aggregates/top_material_plant_series.json",
+      "grain": "MATERIAL_ID x PLANT_ID x POSTING_MONTH",
+      "entries": 30,
+      "bytes": 12966
+    },
+    "type_group_month.json": {
+      "path": "step1/aggregates/type_group_month.json",
+      "grain": "MATERIAL_TYPE x MATERIAL_GROUP x POSTING_MONTH",
+      "entries": 24,
+      "bytes": 4015
+    }
+  },
+  "artifacts": {
+    "demand_grain_sql": "step1/sql/step1_demand_material_plant_month.sql",
+    "reconciliation_sql": "step1/sql/step1_reconciliation.sql",
+    "reconcile_table_markdown": "step1/reconciliation.md"
+  }
+}
