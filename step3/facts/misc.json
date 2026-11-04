@@ -1,0 +1,94 @@
+{
+  "columns_plant_mc": ["plant","mc","lines","stock_qty","stock_val","ss_qty","rop_qty","max_qty","f12_qty","over_lines","over_qty","over_val","under_lines","under_qty","below_ss_lines","nodemand_lines","nodemand_val","rop_within_20","c_rop_sum","c_ss_sum","c_max_sum","avg_lt_planned_only"],
+  "note_plant_mc": "plant_mc.json uses PLANNED_DELIVERY_DAYS+24 only (no actual PO->GR median). The full lead-time rule MAX(planned, actual median)+24 is in crit_full / pr_* below; avg full LT = 69.717 d, median 70 d.",
+
+  "demand_monthly": [
+    ["2024-01",158151.217,160456.217,2305.0,73567],["2024-02",90664.985,92531.985,1867.0,36396],
+    ["2024-03",87800.022,90496.022,2696.0,40566],["2024-04",104433.000,107679.000,3246.0,45727],
+    ["2024-05",96162.000,99624.000,3462.0,49188],["2024-06",85984.000,89387.000,3403.0,46722],
+    ["2024-07",163232.189,165688.189,2456.0,82812],["2024-08",132196.633,134699.633,2503.0,58509],
+    ["2024-09",97988.000,100694.000,2706.0,41519],["2024-10",117099.949,120718.949,3619.0,52743],
+    ["2024-11",93422.109,96605.109,3183.0,48198],["2024-12",90338.852,93567.852,3229.0,52443],
+    ["2025-01",191784.031,194676.031,2892.0,89854],["2025-02",134416.325,136881.325,2465.0,56664],
+    ["2025-03",125814.611,128423.611,2609.0,45749],["2025-04",128742.895,132058.895,3316.0,52272],
+    ["2025-05",120485.127,124093.127,3608.0,55698],["2025-06",132539.529,136479.529,3940.0,57595],
+    ["2025-07",183795.503,187459.503,3664.0,93123],["2025-08",187081.634,191141.634,4060.0,85891],
+    ["2025-09",148805.509,152491.509,3686.0,50657],["2025-10",155708.813,160326.813,4618.0,60945],
+    ["2025-11",137259.478,142511.478,5252.0,59327],["2025-12",124462.841,129074.841,4612.0,57081]
+  ],
+  "columns_demand_monthly": ["month","net","issues_261","returns_262","movement_rows"],
+
+  "crit_full_rop": {"DESIRABLE":{"below":8014,"below_val":425673544.75,"at_or_above":10780,"at_or_above_val":1847129483.54},
+                    "ESSENTIAL":{"below":4982,"below_val":305082725.13,"at_or_above":7697,"at_or_above_val":1233419539.21},
+                    "VITAL":{"below":1635,"below_val":574797954.79,"at_or_above":1609,"at_or_above_val":739119699.36}},
+  "crit_full_ss":  {"DESIRABLE":{"below":5448,"at_or_above":13346},
+                    "ESSENTIAL":{"below":3157,"at_or_above":9522},
+                    "VITAL":{"below":866,"at_or_above":2378}},
+  "crit_zero_stock": {"VITAL":365,"ESSENTIAL":1836,"DESIRABLE":4070},
+  "crit_has_stock":  {"VITAL":2879,"ESSENTIAL":10843,"DESIRABLE":14724},
+
+  "pr_priority": [["CRITICAL","N",7811,491030,2727294940.96],["CRITICAL","Y",1660,112548,769644155.46],
+                  ["HIGH","N",147,20635,68811142.24],["HIGH","Y",32,2528,16745265.68],
+                  ["MEDIUM","N",3770,113220,775699285.00],["MEDIUM","Y",1211,57518,386434866.11]],
+  "columns_pr_priority": ["priority","shutdown_flag","lines","pr_qty","pr_val_inr"],
+
+  "pr_week": [["0",9988,641954,3681308830.15],["1",621,26292,184251011.76],["2",584,26000,177025390.72],
+              ["3",568,24727,168275966.63],["4",563,20057,137270994.99],["5",513,16730,114125662.35],
+              ["6",462,12100,81087285.00],["7",390,10463,70595359.64],["8",331,7706,48070595.78],
+              ["9",249,4598,28663966.19],["10",143,3109,21134497.95],["11",72,1605,10630122.96],
+              ["12",147,2138,22189971.33]],
+  "columns_pr_week": ["weeks_of_cover_bucket","lines","pr_qty","pr_val_inr"],
+
+  "pr_plant": [["HZL_DEMO_01",2734,145066,878499350.10],["HZL_DEMO_02",2682,131824,765247161.01],
+               ["HZL_DEMO_03",2139,109376,669087953.06],["HZL_DEMO_04",2478,161756,960470330.18],
+               ["HZL_DEMO_05",2694,198014,1155602286.48],["HZL_DEMO_06",1904,51443,315722574.62]],
+  "columns_pr_plant": ["plant","lines","pr_qty","pr_val_inr"],
+
+  "lead_time": {"lines":34717,"avg_days":69.717,"median_days":70.0,
+    "rule":"MAX(PLANNED_DELIVERY_DAYS, median actual PO->GR per material) + 24d median PR->PO"},
+
+  "nmsm_confusion": [["NON_MOVING","SM",1239,152407881.27],["NON_MOVING","ACTIVE",2378,281236143.67],
+    ["NON_MOVING","NM",516,57737556.62],["OBSOLETE","OBSOLETE",101,7716805.95],["OBSOLETE","ACTIVE",1198,168497356.30],
+    ["OBSOLETE","SM",952,110106940.82],["OBSOLETE","NM",414,35877134.79],["ACTIVE","ACTIVE",18723,2568282497.98],
+    ["SLOW_MOVING","ACTIVE",6933,1389334627.98],["SLOW_MOVING","SM",2263,354026001.40]],
+  "columns_nmsm_confusion": ["engine_class","sap_nm_sm_class","lines","value_inr"],
+
+  "rop_flag": {"within_20":8135,"within_20_val":1338116019.16,"increase":21595,"increase_val":2703335330.71,
+               "decrease":4987,"decrease_val":1083771596.91,"has_sap_rop":34717,"no_sap_rop":0,
+               "note":"computed on planned-only LT variant; tiering is indicative, coverage figure (34717/34717) is exact"},
+
+  "duplicates": {"exact_desc_within_group_1.00":{"clusters":205,"members":428,"redundant":223},
+                 "base_token_within_group_0.60":{"clusters":920,"members":2132,"redundant":1212},
+                 "method":"deterministic string match on MATERIAL_DESCRIPTION within MATERIAL_GROUP: exact match = similarity 1.00 (>=0.80 likely-duplicate tier); description minus trailing variant token = >=0.60 review tier. No fuzzy/embedding scorer is available in-session."},
+
+  "nom_days": {"never_issued_lines":4,"never_issued_sentinel_days":9999,"lines_with_history":34713,
+               "avg_days_since_last_consumption":121.66,"max_days":730,"lines_gt_90d":15990},
+
+  "pr_history": {"2024":{"count":61231,"qty":1283581.0},"2025":{"count":82614,"qty":1730797.0},
+    "date_adherence":{"on_time":134944,"late":3095,"no_approval_date":5806,"total":143845},
+    "status":{"APPROVED":136626,"APPROVED_AWAITING_PO":1413,"CANCELLED":5806}},
+
+  "plan_vs_actual_monthly": [
+    ["2024-01",221,313508876.13,341898815.98,364303263.57],["2024-02",240,571479608.16,573229754.67,346236197.41],
+    ["2024-03",247,731239589.50,774452295.96,464827622.88],["2024-04",236,428111226.46,532833239.97,653118950.10],
+    ["2024-05",210,487877240.22,610561070.12,595529728.16],["2024-06",209,458885693.05,519430445.89,567037113.41],
+    ["2024-07",228,524506744.06,544176160.30,552628946.06],["2024-08",246,1175394803.50,872498818.05,515486314.49],
+    ["2024-09",247,731901106.16,793227672.83,680840757.28],["2024-10",246,691762340.95,670742431.36,796821791.73],
+    ["2024-11",222,586223650.76,585416622.56,707045361.49],["2024-12",246,599682299.35,564933368.22,622772848.12],
+    ["2025-01",256,427373520.19,549781715.40,557569606.56],["2025-02",263,716537193.45,750654073.04,490493777.17],
+    ["2025-03",271,968065370.08,1000787189.15,699937899.27],["2025-04",261,666041550.04,629428985.18,846705864.16],
+    ["2025-05",242,763201337.86,678292169.75,719635031.14],["2025-06",244,649288057.44,617326182.84,636364985.59],
+    ["2025-07",254,680220200.56,755912110.58,643195242.09],["2025-08",263,1090623522.68,1021952436.61,710357601.73],
+    ["2025-09",265,991534591.19,1030720738.56,857440521.10],["2025-10",261,838428039.31,896855555.59,988437534.70],
+    ["2025-11",229,731770778.45,720143042.06,895116149.35],["2025-12",236,706166710.42,785876564.37,776694024.06]
+  ],
+  "columns_plan_vs_actual": ["month","rows","plan_value_inr","actual_po_value_inr","actual_gr_value_inr"],
+  "plan_vs_actual_note": "BUSINESS_PLAN_VS_ACTUAL carries VALUE columns only (PLAN_VALUE_INR / ACTUAL_PO_VALUE_INR / ACTUAL_GR_VALUE_INR). There is no planned-quantity column, so the Qty view of section 10 is UNCOMPUTABLE.",
+
+  "shutdown": {"rows":16172,"shutdown_ids":36,"equipment":144,"materials":1037,"required_qty":381845.429,
+    "note":"FACT_SHUTDOWN_SCHEDULE has only SHUTDOWN_ID, EQUIPMENT_ID, MATERIAL_ID, REQUIRED_QTY - no start/end dates, no plant, no status, no type."},
+
+  "scope": {"lines":34717,"materials":6000,"plants":6,"material_groups":12,
+            "net_demand_24m":3088369.252,"net_demand_2025":1770896.296,
+            "cohort_months":276088,"pairs_with_movement":34713}
+}

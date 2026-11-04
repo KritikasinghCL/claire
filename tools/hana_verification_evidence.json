@@ -1,0 +1,104 @@
+{
+  "note": "Independent re-derivation of every figure published in step1/step1_data.json, run directly against SAP HANA VEDANTA_POC by Maya (Scrum Master) on 2026-11-04 as a second pair of eyes over the Data Steward's step-1 deliverable. Each entry records the value HANA returned. tools/verify_step1_vs_hana.py asserts the committed deliverable against these. Read-only: every query was a SELECT with GROUP BY; nothing in HANA was altered.",
+  "verified_at_utc": "2026-11-04T17:45:00Z",
+  "verified_by": "Maya — Scrum Master, Inventory & Forecasting Cell",
+  "schema": "VEDANTA_POC",
+  "as_of_date": "2025-12-31",
+
+  "movement_totals_in_scope": {
+    "query": "UNION ALL over FACT_MATERIAL_MOVEMENT_PART_001..004, IS_BACKCAST_PERIOD='N', POSTING_DATE 2024-01-01..2025-12-31, joined to DIM_MATERIAL on MATERIAL_TYPE IN ('ZSPR','ZSPN'), GROUP BY MOVEMENT_TYPE",
+    "261": {"lines": 1317733, "qty": 3167766.25},
+    "262": {"lines": 75513,   "qty": 79397.00},
+    "101": {"lines": 130567,  "qty": 2661219.97},
+    "102": {"lines": 4534,    "qty": 13905.34},
+    "701": {"lines": 1606,    "qty": 3227.39},
+    "702": {"lines": 1822,    "qty": 3469.33}
+  },
+
+  "inventory_at_as_of": {
+    "curated": {
+      "source": "INVENTORY_CLASSIFICATION WHERE AS_OF_DATE='2025-12-31'",
+      "lines": 34717, "material_plant_pairs": 34717, "distinct_plants": 6,
+      "available_qty": 852059.190, "inventory_value_inr": 5125222946.78,
+      "reorder_point_qty": 602102.299, "safety_stock_qty": 435986.110,
+      "trailing_12m_demand_qty": 2091095.354
+    },
+    "raw": {
+      "source": "FACT_INVENTORY_SNAPSHOT_PART_001..003 WHERE SNAPSHOT_DATE='2025-12-31', joined to DIM_MATERIAL for MATERIAL_TYPE and UNIT_COST_INR",
+      "lines": 34717, "distinct_plants": 6,
+      "closing_qty": 852059.190, "value_inr": 5125222946.78
+    }
+  },
+
+  "all_plants_rollup": {
+    "source": "INVENTORY_KPI_MONTHLY WHERE POSTING_MONTH='2025-12' AND KPI_CODE='GROSS_INVENTORY_VALUE_INR'",
+    "DIM_PLANT_rows": 7,
+    "ALL_PLANTS_plant_type": "AGGREGATE",
+    "ALL_PLANTS_value_inr": 5125222946.78,
+    "six_physical_plants_sum_inr": 5125222946.78,
+    "conclusion": "ALL_PLANTS is a rollup identical to the sum of the six physical plants. DIM_PLANT.PLANT_TYPE='AGGREGATE' is the machine-readable way to exclude it."
+  },
+
+  "movement_class": {
+    "curated_counts": {"ACTIVE": 18723, "SLOW_MOVING": 9196, "NON_MOVING": 2934, "OBSOLETE": 3864},
+    "raw_recompute_rule": "class from DAYS_BETWEEN(last MovType-261 posting date, 2025-12-31): <=90 ACTIVE, <=180 SLOW_MOVING, <=365 NON_MOVING, >365 OBSOLETE; never-issued = NON_MOVING per the brief",
+    "raw_counts": {"ACTIVE": 18723, "SLOW_MOVING": 9196, "NON_MOVING": 4133, "OBSOLETE": 2665},
+    "confusion_matrix_raw_vs_curated": [
+      {"raw": "ACTIVE",      "curated": "ACTIVE",      "lines": 18723},
+      {"raw": "SLOW_MOVING", "curated": "SLOW_MOVING", "lines": 9196},
+      {"raw": "NON_MOVING",  "curated": "NON_MOVING",  "lines": 2934},
+      {"raw": "NON_MOVING",  "curated": "OBSOLETE",    "lines": 1195},
+      {"raw": "OBSOLETE",    "curated": "OBSOLETE",    "lines": 2665},
+      {"raw": "NON_MOVING",  "curated": "OBSOLETE",    "lines": 4, "comment": "never-issued, DAYS_SINCE_LAST_CONSUMPTION=9999, LAST_CONSUMPTION_DATE NULL"}
+    ],
+    "third_curated_table_cross_check": {
+      "source": "MATERIAL_PLANT_CLASSIFICATION (34,717 rows, single AS_OF_DATE 2025-12-31)",
+      "agrees_with_INVENTORY_CLASSIFICATION_on": 33518,
+      "disagrees_on": 1199,
+      "disagreement_shape": "MATERIAL_PLANT_CLASSIFICATION says NON_MOVING where INVENTORY_CLASSIFICATION says OBSOLETE — exactly the same 1,199 lines, and it agrees with the brief's rule",
+      "significance": "VEDANTA_POC contains two curated movement-class columns that contradict each other. The dashboard must name which one it reads."
+    },
+    "cut_point_hypothesis_test": {
+      "hypothesis_as_published_in_step1": "the curated rule applies an NM/OBSOLETE threshold below 365 days",
+      "test": "if a cut-point at some D<365 explained it, no day-value in 181..365 could carry both classes, and the OBSOLETE share would rise with age",
+      "observed_overlapping_day_values": 152,
+      "observed_obsolete_share_by_age_bucket": {"181-240": 29.53, "241-300": 29.19, "301-365": 28.69},
+      "observed_obsolete_share_by_plant": {"HZL_DEMO_01": 29.54, "HZL_DEMO_02": 28.83, "HZL_DEMO_03": 29.43, "HZL_DEMO_04": 28.19, "HZL_DEMO_05": 28.50, "HZL_DEMO_06": 29.13},
+      "verdict": "REFUTED. 152 distinct day-values in the 181-365 band carry BOTH classes, so no threshold on age can separate them. The OBSOLETE share is flat (~29%) across age buckets and across all six plants, and the two groups are statistically indistinguishable on every attribute tested (mean age 292.9 vs 294.7 days, mean trailing-12m demand 5.57 vs 5.54, ABC, XYZ, CRITICALITY, inventory value, zero-demand share). Both groups carry the identical RULE_ID R-CLS-01 / RULE_VERSION 1.1.0. The split is an unexplained ~29% allocation within the band, not a different cut-point."
+    }
+  },
+
+  "trailing_12m_demand": {
+    "window": "2025-01-01..2025-12-31, IS_BACKCAST_PERIOD='N'",
+    "curated_sum": 2091095.4,
+    "raw_net_261_minus_262_sum": 1770896.3,
+    "raw_issues_only_261_sum": 1815618.3,
+    "lines_where_curated_equals_issues_only": 25925,
+    "lines_where_curated_equals_net": 18927,
+    "total_lines": 34717
+  },
+
+  "reorder_point": {
+    "raw_formula": "COALESCE(trailing-12m net demand,0)/365 * DIM_MATERIAL.PLANNED_DELIVERY_DAYS + INVENTORY_CLASSIFICATION.SAFETY_STOCK_QTY",
+    "curated_sum": 602102.3,
+    "raw_sum": 624047.7,
+    "diff": -21945.4,
+    "diff_pct_raw_denominator": -3.52,
+    "diff_pct_curated_denominator": -3.64,
+    "lines_within_20pct_raw_denominator": 16630,
+    "lines_within_20pct_curated_denominator": 16340,
+    "lines_with_nonpositive_rop": 0,
+    "total_lines": 34717
+  },
+
+  "last_consumption_date_agreement": {
+    "lines": 34717,
+    "curated_age_equals_raw_last_261_age": 32875,
+    "curated_lcd_equals_raw_last_261_date": 32871,
+    "lines_where_curated_lcd_is_later_than_any_261": 1842,
+    "lines_where_curated_lcd_is_earlier": 0,
+    "of_those_explained_by_a_later_262": 75,
+    "class_impact": "none — all 1,842 sit inside ACTIVE or SLOW_MOVING on both the curated and the raw rule, so no line changes class",
+    "significance": "The step-1 deliverable states the curated ageing agrees with RAW on 100%. That holds for the 1,195 disputed lines only. Across all 34,717 lines the agreement is 32,875 (94.7%)."
+  }
+}

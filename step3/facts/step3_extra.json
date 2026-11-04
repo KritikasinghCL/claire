@@ -1,0 +1,177 @@
+{
+  "note": "Additional HANA facts pulled in step 3 (Liam) for sections 3, 4, 5, 8, 9, 10. Every figure is a read-only SELECT against VEDANTA_POC. Pulled 2026-11-04.",
+
+  "snapshot_2025_12_31": {
+    "source": "FACT_INVENTORY_SNAPSHOT_PART_001..003 @ SNAPSHOT_DATE='2025-12-31', joined to DIM_MATERIAL for ZSPR/ZSPN, ALL_PLANTS excluded",
+    "columns": ["plant", "lines", "closing_qty", "reserved_qty"],
+    "rows": [
+      ["HZL_DEMO_01", 5960, 147723.036, 0.0],
+      ["HZL_DEMO_02", 5965, 139630.489, 0.0],
+      ["HZL_DEMO_03", 5533, 125535.311, 0.0],
+      ["HZL_DEMO_04", 5737, 144996.416, 0.0],
+      ["HZL_DEMO_05", 5893, 172972.109, 0.0],
+      ["HZL_DEMO_06", 5629, 121201.829, 0.0]
+    ],
+    "reserved_qty_note": "RESERVED_QTY is 0.000 on every in-scope line at the as-of date. Committed stock is therefore reported as 0, not as UNCOMPUTABLE: the column exists and its value is zero.",
+    "line_count_note": "The snapshot carries 34,717 in-scope material-plant lines, the same as INVENTORY_CLASSIFICATION. Snapshot closing qty 852,059.19 equals curated AVAILABLE_QTY exactly (step-1 reconciliation item R1)."
+  },
+
+  "curated_reorder_recommendation": {
+    "source": "REORDER_RECOMMENDATION @ AS_OF_DATE='2025-12-31' (the only as-of date in the table)",
+    "rows_total": 3916,
+    "distinct_material_plant_pairs": 3916,
+    "totals": {
+      "safety_stock_qty": 87341.721, "reorder_point_qty": 120099.152, "max_stock_qty": 148087.932,
+      "recommended_qty": 94495.0, "estimated_value_inr": 501515712.58,
+      "open_pr_qty": 4930.0, "open_po_qty": 38049.0
+    },
+    "columns_by_priority": ["priority", "shutdown_flag", "lines", "recommended_qty", "estimated_value_inr", "min_recommended_pr_date", "max_recommended_pr_date"],
+    "by_priority": [
+      ["HIGH", "N", 1318, 40448.0, 241265655.91, "2025-12-31", "2026-12-31"],
+      ["HIGH", "Y", 282, 9035.0, 61526714.61, "2025-12-31", "2026-01-12"],
+      ["MEDIUM", "N", 815, 21784.0, 58663545.06, "2025-12-31", "2026-12-31"],
+      ["MEDIUM", "Y", 211, 2873.0, 14736296.73, "2025-12-31", "2026-11-28"],
+      ["LOW", "N", 1065, 15644.0, 96782174.32, "2025-12-31", "2026-12-31"],
+      ["LOW", "Y", 225, 4711.0, 28541325.95, "2025-12-31", "2026-08-05"]
+    ]
+  },
+
+  "mrp_type": {
+    "available": false,
+    "reason": "No MRP-type column exists anywhere in VEDANTA_POC. A catalogue scan of SYS.TABLE_COLUMNS over all 42 tables / 377 columns for '%MRP%', '%DISPO%' returned zero hits; the SAP field MARC-DISMM is not in the extract and is absent from SAP_FIELD_MAPPING. The VB/PD split in section 8 is UNCOMPUTABLE.",
+    "catalogue_scan": "SELECT TABLE_NAME, COLUMN_NAME FROM SYS.TABLE_COLUMNS WHERE SCHEMA_NAME='VEDANTA_POC' AND (COLUMN_NAME LIKE '%MRP%' OR COLUMN_NAME LIKE '%COMMIT%' OR COLUMN_NAME LIKE '%RESERV%' OR COLUMN_NAME LIKE '%DISPO%') -> only RESERVED_QTY on the three snapshot partitions."
+  },
+
+  "nm_sm_transitions_90d": {
+    "source": "INVENTORY_CLASSIFICATION @ 2025-12-31, brief thresholds applied to DAYS_SINCE_LAST_CONSUMPTION today and to DAYS_SINCE_LAST_CONSUMPTION + 90",
+    "method": "A line transitions if no further 261 consumption occurs in the next 90 days. This is the brief's NM/SM horizon of 90 days applied mechanically; it is an ageing projection, not a ContextFlow forecast.",
+    "columns": ["class_today", "class_in_90d", "lines", "qty", "value_inr"],
+    "rows": [
+      ["ACTIVE", "ACTIVE", 5615, 69327.540, 422232354.75],
+      ["ACTIVE", "SLOW_MOVING", 13108, 343328.204, 2146050143.23],
+      ["SLOW_MOVING", "NON_MOVING", 9196, 283966.908, 1743360629.38],
+      ["NON_MOVING", "NON_MOVING", 1412, 27897.538, 145775639.61],
+      ["NON_MOVING", "OBSOLETE", 2721, 68810.000, 345605941.95],
+      ["OBSOLETE", "OBSOLETE", 2665, 58729.000, 322198237.86]
+    ]
+  },
+
+  "sap_movement_class_vs_nm_sm_class": {
+    "source": "INVENTORY_CLASSIFICATION.MOVEMENT_CLASS (curated) vs DIM_MATERIAL.NM_SM_CLASS, 2025-12-31",
+    "columns": ["curated_movement_class", "sap_nm_sm_class", "lines", "qty", "value_inr"],
+    "rows": [
+      ["ACTIVE", "ACTIVE", 18723, 412655.744, 2568282497.98],
+      ["NON_MOVING", "ACTIVE", 1694, 38535.000, 199477435.31],
+      ["NON_MOVING", "NM", 381, 10533.000, 43466857.75],
+      ["NON_MOVING", "SM", 859, 21569.000, 109605173.72],
+      ["OBSOLETE", "ACTIVE", 1882, 39718.538, 250256064.66],
+      ["OBSOLETE", "NM", 549, 12332.000, 50147833.66],
+      ["OBSOLETE", "OBSOLETE", 101, 2217.000, 7716805.95],
+      ["OBSOLETE", "SM", 1332, 30532.000, 152909648.37],
+      ["SLOW_MOVING", "ACTIVE", 6933, 219504.908, 1389334627.98],
+      ["SLOW_MOVING", "SM", 2263, 64462.000, 354026001.40]
+    ]
+  },
+
+  "nm_sm_watchlist": {
+    "source": "INVENTORY_CLASSIFICATION @ 2025-12-31 joined to DIM_MATERIAL; ACTIVE lines that fall out of ACTIVE inside the 90-day horizon, ranked by inventory value at risk",
+    "columns": ["material", "plant", "description", "material_group", "material_type", "criticality", "days_since_last_consumption", "qty", "value_inr", "class_today", "class_in_90d"],
+    "rows": [
+      ["HZL1002249", "HZL_DEMO_05", "Pressure Transmitter 199MM GR-B", "INSTRUMENTATION", "ZSPR", "VITAL", 21, 195.0, 10804838.85, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002262", "HZL_DEMO_05", "Temperature Sensor Probe 224MM GR-A", "INSTRUMENTATION", "ZSPN", "ESSENTIAL", 26, 59.0, 5437165.65, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002261", "HZL_DEMO_04", "Level Switch Assembly 270MM GR-B", "INSTRUMENTATION", "ZSPR", "DESIRABLE", 80, 77.0, 3674154.33, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002253", "HZL_DEMO_06", "Analyser Cell 223MM GR-B", "INSTRUMENTATION", "ZSPR", "VITAL", 81, 48.0, 3467821.92, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1003916", "HZL_DEMO_05", "Shaft Sleeve 139MM HT", "MECHANICAL", "ZSPR", "ESSENTIAL", 2, 481.0, 3182348.91, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002477", "HZL_DEMO_05", "Return Roller 177MM HT", "CONVEYOR_COMPONENTS", "ZSPN", "DESIRABLE", 32, 293.0, 2860122.43, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004277", "HZL_DEMO_02", "Busbar Support Insulator 145MM XP", "ELECTRICAL", "ZSPN", "DESIRABLE", 1, 122.0, 2782300.28, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002253", "HZL_DEMO_04", "Analyser Cell 223MM GR-B", "INSTRUMENTATION", "ZSPR", "VITAL", 31, 38.0, 2745359.02, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002451", "HZL_DEMO_01", "Pressure Transmitter 30MM GR-B", "INSTRUMENTATION", "ZSPR", "DESIRABLE", 31, 87.0, 2704007.85, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002257", "HZL_DEMO_01", "Control Valve Positioner 43MM GR-B", "INSTRUMENTATION", "ZSPN", "DESIRABLE", 84, 59.0, 2663308.38, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002460", "HZL_DEMO_05", "Temperature Sensor Probe 57MM GR-B", "INSTRUMENTATION", "ZSPR", "DESIRABLE", 4, 55.0, 2602396.50, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002457", "HZL_DEMO_01", "Flow Meter Element 130MM HD", "INSTRUMENTATION", "ZSPR", "VITAL", 1, 68.0, 2581106.60, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1005126", "HZL_DEMO_05", "Plummer Block Housing 116MM HT", "BEARING_COMPONENTS", "ZSPN", "VITAL", 27, 271.0, 2554557.11, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004479", "HZL_DEMO_05", "Bearing Assembly 252MM PRO", "BEARING_COMPONENTS", "ZSPN", "VITAL", 33, 395.0, 2553951.50, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002465", "HZL_DEMO_05", "Signal Isolator Module 190MM PRO", "INSTRUMENTATION", "ZSPN", "VITAL", 41, 65.0, 2529874.75, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004277", "HZL_DEMO_01", "Busbar Support Insulator 145MM XP", "ELECTRICAL", "ZSPN", "DESIRABLE", 6, 106.0, 2417408.44, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1003918", "HZL_DEMO_04", "Mechanical Seal Kit 109MM GR-A", "MECHANICAL", "ZSPN", "ESSENTIAL", 16, 320.0, 2360553.60, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002464", "HZL_DEMO_04", "Signal Isolator Module 175MM HT", "INSTRUMENTATION", "ZSPR", "DESIRABLE", 5, 55.0, 2356469.50, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002935", "HZL_DEMO_03", "Pulley Lagging Set 319MM PRO", "CONVEYOR_COMPONENTS", "ZSPR", "DESIRABLE", 19, 165.0, 2351938.05, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1003915", "HZL_DEMO_05", "Bush Assembly 103MM HD", "MECHANICAL", "ZSPN", "ESSENTIAL", 7, 405.0, 2320083.00, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1003915", "HZL_DEMO_04", "Bush Assembly 103MM HD", "MECHANICAL", "ZSPN", "ESSENTIAL", 11, 404.0, 2314354.40, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004844", "HZL_DEMO_05", "Spherical Roller Bearing 219MM GR-A", "BEARING_COMPONENTS", "ZSPR", "VITAL", 1, 366.0, 2308446.18, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004277", "HZL_DEMO_05", "Busbar Support Insulator 145MM XP", "ELECTRICAL", "ZSPN", "DESIRABLE", 7, 101.0, 2303379.74, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1001215", "HZL_DEMO_03", "Skirt Rubber Strip 30MM HT", "CONVEYOR_COMPONENTS", "ZSPR", "VITAL", 54, 427.0, 2250746.89, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002464", "HZL_DEMO_01", "Signal Isolator Module 175MM HT", "INSTRUMENTATION", "ZSPR", "DESIRABLE", 25, 52.0, 2227934.80, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004476", "HZL_DEMO_05", "Deep Groove Ball Bearing 84MM GR-B", "BEARING_COMPONENTS", "ZSPR", "DESIRABLE", 39, 358.0, 2210220.40, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004812", "HZL_DEMO_04", "Needle Roller Bearing 273MM STD", "BEARING_COMPONENTS", "ZSPR", "VITAL", 10, 289.0, 2199703.27, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004504", "HZL_DEMO_01", "Needle Roller Bearing 214MM GR-A", "BEARING_COMPONENTS", "ZSPR", "DESIRABLE", 2, 329.0, 2187876.32, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1004861", "HZL_DEMO_05", "Bearing Assembly 292MM GR-A", "BEARING_COMPONENTS", "ZSPN", "VITAL", 18, 223.0, 2130865.35, "ACTIVE", "SLOW_MOVING"],
+      ["HZL1002262", "HZL_DEMO_01", "Temperature Sensor Probe 224MM GR-A", "INSTRUMENTATION", "ZSPN", "ESSENTIAL", 9, 23.0, 2119573.05, "ACTIVE", "SLOW_MOVING"]
+    ]
+  },
+
+  "duplicate_clusters": {
+    "method": "Deterministic exact match on DIM_MATERIAL.MATERIAL_DESCRIPTION within MATERIAL_GROUP, ZSPR/ZSPN only. An exact description match inside one material group scores similarity 1.00, which is >= the 0.80 likely-duplicate threshold. The >=0.60 review tier is the base-token variant in misc.json. No fuzzy or embedding scorer is available in-session, so no score between 0.60 and 1.00 is produced.",
+    "scope_totals": {
+      "clusters": 205, "member_materials": 428, "redundant_materials": 223,
+      "material_plant_lines": 2502, "stock_qty": 63430.0, "stock_value_inr": 321365935.13
+    },
+    "columns_by_plant": ["plant", "clusters", "member_materials", "redundant_materials", "stock_qty", "stock_value_inr"],
+    "by_plant": [
+      ["HZL_DEMO_01", 205, 428, 223, 10418.0, 54026537.75],
+      ["HZL_DEMO_02", 203, 424, 221, 10838.0, 55173120.94],
+      ["HZL_DEMO_03", 186, 390, 204, 9935.0, 47268664.93],
+      ["HZL_DEMO_04", 197, 412, 215, 9865.0, 52163593.26],
+      ["HZL_DEMO_05", 201, 419, 218, 12680.0, 68009021.29],
+      ["HZL_DEMO_06", 184, 384, 200, 8892.0, 40629259.56]
+    ],
+    "columns_top_clusters": ["material_group", "description", "member_materials", "material_id_min", "material_id_max", "stock_qty", "stock_value_inr"],
+    "top_clusters_by_value": [
+      ["ELECTRICAL", "Busbar Support Insulator 145MM XP", 2, "HZL1004277", "HZL1005751", 905.0, 9353626.70],
+      ["CONVEYOR_COMPONENTS", "Pulley Lagging Set 215MM GR-B", 2, "HZL1002778", "HZL1002884", 1116.0, 8272658.56],
+      ["CONVEYOR_COMPONENTS", "Belt Scraper Blade 80MM HD", 2, "HZL1002865", "HZL1002923", 889.0, 7588925.89],
+      ["BEARING_COMPONENTS", "Plummer Block Housing 45MM GR-A", 3, "HZL1004480", "HZL1005895", 1461.0, 7237663.86],
+      ["BEARING_COMPONENTS", "Bearing Adapter Sleeve 154MM GR-A", 2, "HZL1004475", "HZL1004800", 1189.0, 7116034.66],
+      ["BEARING_COMPONENTS", "Needle Roller Bearing 22MM XP", 2, "HZL1004791", "HZL1005876", 1124.0, 6917357.00],
+      ["CONVEYOR_COMPONENTS", "Impact Bar Assembly 178MM GR-A", 2, "HZL1002739", "HZL1002890", 722.0, 6800815.86],
+      ["BEARING_COMPONENTS", "Taper Roller Bearing 138MM HD", 2, "HZL1004824", "HZL1004923", 1209.0, 6306403.20],
+      ["BEARING_COMPONENTS", "Bearing Adapter Sleeve 289MM XP", 2, "HZL1004986", "HZL1005012", 940.0, 6273477.85],
+      ["MECHANICAL", "Gear Wheel 242MM PRO", 2, "HZL1003339", "HZL1003570", 942.0, 5647532.55],
+      ["BEARING_COMPONENTS", "Deep Groove Ball Bearing 129MM HD", 2, "HZL1001991", "HZL1004802", 808.0, 5421478.00],
+      ["BEARING_COMPONENTS", "Spherical Roller Bearing 37MM GR-B", 2, "HZL1004705", "HZL1004832", 762.0, 5386603.02],
+      ["MECHANICAL", "Gear Wheel 152MM HD", 2, "HZL1001430", "HZL1003638", 816.0, 4844617.06],
+      ["BEARING_COMPONENTS", "Bearing Adapter Sleeve 294MM HT", 3, "HZL1004470", "HZL1004978", 681.0, 4366959.03],
+      ["BEARING_COMPONENTS", "Spherical Roller Bearing 206MM GR-B", 2, "HZL1001740", "HZL1005090", 729.0, 4208047.15],
+      ["BEARING_COMPONENTS", "Bearing Assembly 277MM GR-B", 2, "HZL1005443", "HZL1005453", 1035.0, 4205320.72],
+      ["CONVEYOR_COMPONENTS", "Return Roller 202MM HD", 2, "HZL1002742", "HZL1002874", 384.0, 4200335.36],
+      ["BEARING_COMPONENTS", "Deep Groove Ball Bearing 38MM GR-A", 2, "HZL1000860", "HZL1000973", 853.0, 4165084.89],
+      ["MECHANICAL", "Drive Shaft Assembly 95MM GR-A", 2, "HZL1003451", "HZL1003501", 642.0, 3655691.22],
+      ["BEARING_COMPONENTS", "Plummer Block Housing 144MM GR-B", 2, "HZL1004472", "HZL1005913", 712.0, 3645104.84],
+      ["BEARING_COMPONENTS", "Bearing Assembly 133MM XP", 2, "HZL1004718", "HZL1004954", 627.0, 3597369.78],
+      ["BEARING_COMPONENTS", "Taper Roller Bearing 150MM HD", 2, "HZL1000883", "HZL1001114", 506.0, 3550961.01],
+      ["BEARING_COMPONENTS", "Bearing Assembly 161MM HT", 2, "HZL1004620", "HZL1004711", 513.0, 3522971.85],
+      ["MECHANICAL", "Flexible Coupling Element 238MM HT", 2, "HZL1000047", "HZL1003637", 684.0, 3482543.88],
+      ["VALVES_AND_FITTINGS", "Pinch Valve Sleeve 41MM PRO", 2, "HZL1001576", "HZL1004078", 398.0, 3464316.70]
+    ]
+  },
+
+  "plan_vs_actual_by_plant": {
+    "source": "BUSINESS_PLAN_VS_ACTUAL, CALENDAR_MONTH 2024-01..2025-12, grouped by PLANT_ID and SHUTDOWN_DRIVEN",
+    "columns": ["plant", "shutdown_driven", "rows", "plan_value_inr", "actual_po_value_inr", "actual_gr_value_inr"],
+    "rows": [
+      ["HZL_DEMO_01", "N", 547, 2613498062.31, 2784785170.46, 2578792415.13],
+      ["HZL_DEMO_01", "Y", 467, 252635611.82, 215161977.47, 222243132.48],
+      ["HZL_DEMO_02", "N", 543, 2524997216.83, 2625182396.64, 2422689190.48],
+      ["HZL_DEMO_02", "Y", 444, 204845481.57, 169992200.95, 168960954.70],
+      ["HZL_DEMO_03", "N", 537, 1846072684.52, 1995778745.14, 1839499326.93],
+      ["HZL_DEMO_03", "Y", 413, 186352716.95, 180194706.82, 179856787.94],
+      ["HZL_DEMO_04", "N", 550, 3157537924.35, 3194954413.22, 2981551311.46],
+      ["HZL_DEMO_04", "Y", 451, 382049613.47, 280305044.61, 276352654.95],
+      ["HZL_DEMO_05", "N", 541, 3945151373.55, 4028865230.34, 3749684031.18],
+      ["HZL_DEMO_05", "Y", 460, 372914855.10, 250019326.12, 254259150.77],
+      ["HZL_DEMO_06", "N", 506, 953530313.15, 1017544939.24, 936298814.18],
+      ["HZL_DEMO_06", "Y", 384, 90238196.35, 78347308.03, 78409361.42]
+    ],
+    "columns_note": "BUSINESS_PLAN_VS_ACTUAL columns are CALENDAR_MONTH, PLANT_ID, MATERIAL_GROUP, MATERIAL_TYPE, SHUTDOWN_DRIVEN, PLAN_BASIS_VALUE_INR, MANUAL_OVERRIDE_INR, PLAN_VALUE_INR, ACTUAL_PO_VALUE_INR, ACTUAL_GR_VALUE_INR, VARIANCE_INR, VARIANCE_PCT. There is NO quantity column anywhere in the table, so section 10 has no Qty view."
+  }
+}
