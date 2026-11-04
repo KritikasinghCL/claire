@@ -1,0 +1,310 @@
+Recorded output of the two S-8 gates run against step3/dashboard_data.json
+on 2026-11-04. Kept verbatim as the evidence behind S-8-verification-report.md.
+Re-generate with:
+    python3 tools/verify_dashboard_coverage.py
+    python3 tools/verify_dashboard_depth.py
+
+==============================================================================
+A. SECTION COVERAGE — 12 required
+==============================================================================
+sections present: 12
+  OK       kpi_scorecard          cards=6   blocks=7   datarows=73    uncomputable=1
+  OK       demand_forecast        cards=5   blocks=13  datarows=96    uncomputable=12
+  OK       inventory_health       cards=4   blocks=8   datarows=58    uncomputable=0
+  OK       over_understock        cards=4   blocks=8   datarows=59    uncomputable=0
+  OK       nm_sm                  cards=5   blocks=6   datarows=66    uncomputable=0
+  OK       shutdown_maintenance   cards=4   blocks=6   datarows=76    uncomputable=2
+  OK       pr_recommendations     cards=5   blocks=8   datarows=80    uncomputable=0
+  OK       mrp_rop                cards=6   blocks=7   datarows=54    uncomputable=3
+  OK       duplicate_sku          cards=4   blocks=5   datarows=60    uncomputable=1
+  OK       plan_vs_actual         cards=4   blocks=7   datarows=67    uncomputable=1
+  OK       data_sources           cards=6   blocks=10  datarows=17    uncomputable=0
+  OK       raia                   cards=0   blocks=14  datarows=71    uncomputable=0
+
+==============================================================================
+B. CARDS THE BRIEF NAMES, PER SECTION
+==============================================================================
+
+[kpi_scorecard]  6 cards
+    - Gross inventory                        =            852059.19  base UoM
+    - Reduction opportunity                  =         UNCOMPUTABLE  base UoM
+    - Non-operating material                 =                15990  SKU lines
+    - Inventory turnover                     =             1.908066  turns/yr
+    - Vital spares availability              =              88.7485  %
+    - PRs recommended                        =                14631  PR lines
+
+[demand_forecast]  5 cards
+    - Last 12 months (actual)                =          1770896.296  base UoM
+    - 3-month forecast                       =         UNCOMPUTABLE  base UoM   UNCOMPUTABLE
+    - 6-month forecast                       =         UNCOMPUTABLE  base UoM   UNCOMPUTABLE
+    - 9-month forecast                       =         UNCOMPUTABLE  base UoM   UNCOMPUTABLE
+    - 12-month forecast                      =         UNCOMPUTABLE  base UoM   UNCOMPUTABLE
+
+[inventory_health]  4 cards
+    - Stock on hand                          =            852059.19  base UoM
+    - Non-operating material                 =                15990  SKU lines
+    - Inventory turnover                     =             1.908066  turns/yr
+    - Zero-stock lines                       =                 6271  SKU lines
+
+[over_understock]  4 cards
+    - Overstock                              =                15260  SKU lines
+    - No demand                              =                 2782  SKU lines
+    - Understock                             =                14631  SKU lines
+    - Vital below ROP                        =                 1635  SKU lines
+
+[nm_sm]  5 cards
+    - NM + SM at risk                        =                13329  SKU lines
+    - Value at risk                          =           380674.446  base UoM
+    - Precision                              =             0.342941  ratio
+    - Recall                                 =                  1.0  ratio
+    - F1                                     =             0.510731  ratio      RED
+
+[shutdown_maintenance]  4 cards
+    - Shutdown history                       =                   24  events
+    - Projected shutdowns                    =         UNCOMPUTABLE  events     UNCOMPUTABLE
+    - Shutdown material need                 =           257469.634  base UoM
+    - Maintenance requirement                =           121730.015  base UoM
+
+[pr_recommendations]  5 cards
+    - PR lines recommended                   =                14631  PR lines
+    - Recommended quantity                   =               797479  base UoM
+    - Raise immediately                      =                 9988  PR lines
+    - Critical priority                      =                 9471  PR lines
+    - Shutdown-linked                        =                 2903  PR lines
+
+[mrp_rop]  6 cards
+    - Lines with an ROP                      =                34717  SKU lines
+    - MRP type VB                            =         UNCOMPUTABLE  SKU lines  UNCOMPUTABLE
+    - MRP type PD                            =         UNCOMPUTABLE  SKU lines  UNCOMPUTABLE
+    - Within +/-20% of SAP                   =                 7791  SKU lines
+    - Increase recommended                   =                21673  SKU lines
+    - Decrease recommended                   =                 5244  SKU lines
+
+[duplicate_sku]  4 cards
+    - Likely duplicate clusters              =                  205  clusters
+    - Stock in clusters                      =              63430.0  base UoM
+    - Releasable value                       =         UNCOMPUTABLE  INR        UNCOMPUTABLE
+    - Review candidates                      =                  920  clusters
+
+[plan_vs_actual]  4 cards
+    - Plan                                   =       16529824049.97  INR
+    - Actual PO                              =       16821131459.04  INR
+    - Actual GR                              =       15688597131.62  INR
+    - Variance (PO vs plan)                  =         291307409.07  INR
+
+[data_sources]  6 cards
+    - As-of date                             =           2025-12-31  date
+    - Run timestamp                          = 2026-11-04T20:03:06Z  UTC
+    - SKU lines                              =                34717  material-plant lines
+    - Tables discovered                      =                   42  tables
+    - Columns in schema                      =                  377  columns
+    - SAP field mappings                     =                   60  mappings   PROPOSED - validate with client SAP team
+
+==============================================================================
+C. THE 13 KPIs — target / actual / variance / status
+==============================================================================
+kpis present: 13
+CODE                                   TARGET         ACTUAL     VARIANCE  STATUS
+GROSS_INVENTORY_REDUCTION                10.0        29.1318      19.1318  GREEN
+NMI                                      10.0         -1.398      -11.398  RED
+SMI                                      20.0       -90.3924    -110.3924  RED
+OBSOLETE_REDUCTION                        5.0        90.2447      85.2447  GREEN
+QTY_ACCURACY                             90.0        52.2482     -37.7518  RED
+INVENTORY_FORECAST_ACCURACY              90.0           None         None  UNCOMPUTABLE
+NM_SM_F1                                  0.9       0.510731      -0.3893  RED
+VITAL_AVAILABILITY                       95.0        88.7485      -6.2515  AMBER
+ROP_COVERAGE                            100.0          100.0          0.0  GREEN
+DUPLICATE_SKU                             0.0           1125       1125.0  INFO
+PR_DATE_ADHERENCE                        95.0        97.7579       2.7579  GREEN
+PR_COUNT_YOY                             10.0        34.9219      24.9219  RED
+NOM_DAYS                                 90.0         121.66        31.66  RED
+
+status mix: {'GREEN': 4, 'RED': 6, 'UNCOMPUTABLE': 1, 'AMBER': 1, 'INFO': 1}
+UNCOMPUTABLE KPIs and why:
+  - INVENTORY_FORECAST_ACCURACY: No inventory-position forecast exists. ContextFlow
+    experiment 6ae894a219423a530ab79f69 forecasts consumption quantity (target
+    actual_qty), not inventory position.
+
+==============================================================================
+D. HOLLOW BLOCKS (key present, no content behind it)
+==============================================================================
+  none — every container carries content
+
+==============================================================================
+E. RECONCILIATION / WARNINGS / PROVENANCE
+==============================================================================
+reconciliation items: 8
+  Gross inventory QTY (base UoM)      curated=852059.1   raw=852059.1   diff=0.0  0.0%  MATCH
+  Gross inventory VALUE INR           curated=5125222947 raw=5125222947 diff=0.0  0.0%  MATCH
+  Inventory line count (SKU lines)    curated=34717      raw=34717      diff=0    0.0%  MATCH
+  Movement line counts 2024-01..2025-12  raw={'261': 1317733, '262': 75513,
+      '101': 130567, '102': 4534, '702': 1822, '701': 1606, 'total': 1531775}  RAW_ONLY
+  Movement-class counts               curated={'ACTIVE': 18723, 'SLOW_MOVING': 9196,
+      'NON_MOVING': 2934, 'OBSOLETE': 3864} raw={'ACTIVE': 18723, 'SLOW_MOVING': 9196,
+      'NON_MOVING': 4133, 'OBSOLETE': 2665} diff=-1199/+1199  3.4536%  DIFFERENCE
+  Reorder point (ROP), 34,717 lines   curated=602102.3   raw=624047.7   diff=-21945.4  -3.64%  DIFFERENCE
+  Reorder point total (engine vs curated table) curated=120099.152 raw=818303.519
+      diff=698204.367  581.3566%  DIFFERENCE - DIFFERENT POPULATIONS
+  Movement-class (engine rule vs curated)  diff={'NON_MOVING': 1199, 'OBSOLETE': -1199}  DIFFERENCE
+
+warning banners: 17
+  [critical] FORECAST_ARTEFACT_MISSING: step2_forecast.json does not exist in the
+             workspace or on the remote. S-3 is blocked.
+  [critical] FORECAST_CANNOT_EXTRAPOLATE: a predict for 2099-06 returns exactly
+             2026-06's value (1397.11669921875).
+  [critical] FORECAST_NOT_MATERIAL_GRAIN: MATERIAL_ID is not a ContextFlow feature.
+             MAT-000001 and MAT-005999 return byte-identical predictions.
+  [warn    ] HOLDOUT_NOT_TIME_ORDERED: deterministic RANDOM 20% holdout, not the
+             time-ordered 6-month holdout the brief requires.
+  [warn    ] ACCURACY_BELONGS_TO_RUNNER_UP: published WAPE 0.477518 / RMSE 174.086569
+             belong to WeightedEnsemble_L2 (rank 2), not the deployed champion.
+  [warn    ] TWO_ENDPOINTS_IN_SERVICE: two endpoints in_service, 35% apart on RMSE.
+             This dashboard pins experiment 6ae894a2...
+  [warn    ] MOVEMENT_CLASS_RULE_MISMATCH: CURATED disagrees with the brief's rule on
+             1,199 of 34,717 lines (3.45%).
+  [warn    ] ROP_BASIS_MISMATCH: curated ROP 3.64% below a RAW recomputation; only
+             16,340 of 34,717 lines agree within +/-20%.
+  [warn    ] ALL_PLANTS_ROLLUP_ROW: PLANT_ID='ALL_PLANTS' is a pre-aggregated rollup.
+  [info    ] FOUR_PAIRS_NO_MOVEMENT: 4 of 34,717 pairs have no 261 movement at all.
+  [info    ] LUBRICANTS_SPARSE: months with no 261/262 movement; nulls not zeros.
+  [warn    ] MRP_TYPE_ABSENT: no MRP-type column anywhere in VEDANTA_POC
+             (42 tables / 377 columns scanned).
+  [warn    ] PLAN_VS_ACTUAL_VALUE_ONLY: BUSINESS_PLAN_VS_ACTUAL carries VALUE columns
+             only; no quantity columns exist.
+  [warn    ] NO_FORWARD_SHUTDOWN_OR_MAINTENANCE: all 36 events COMPLETED and
+             PLANNED_START_DATE <= 2025-09-19; nothing forward-dated.
+  [warn    ] KPIS_RED: RED against target: NMI, SMI, Qty accuracy, NM/SM F1,
+             PR count YoY, NOM days.
+  [info    ] KPIS_UNCOMPUTABLE: Inventory forecast accuracy.
+  [info    ] SYNTHETIC_POC_DATA: simulated POC figure, not actual Vedanta or
+             Hindustan Zinc performance.
+
+ContextFlow model : ExtraTreesMSE
+experiment_id     : 6ae894a219423a530ab79f69
+run_timestamp_utc : 2026-11-04T20:03:06Z
+as_of_date        : 2025-12-31
+default measure   : QTY
+
+==============================================================================
+BLOCKING: 0
+ADVISORY: 4
+  ! over_understock: brief card terms not in labels: ['no-demand']
+  ! nm_sm: brief card terms not in labels: ['at-risk']
+  ! pr_recommendations: brief card terms not in labels: ['value']
+  ! mrp_rop: brief card terms not in labels: ['adjusted']
+VERDICT: PASS
+==============================================================================
+
+
+##############################################################################
+DEPTH GATE — verify_dashboard_depth.py
+##############################################################################
+
+==============================================================================
+F. CARD-LABEL ADVISORIES — cosmetic, or a real missing card?
+==============================================================================
+
+[over_understock] full card payloads:
+  - 'Overstock' = 15260 SKU lines
+      .excess_qty = 337436.556
+      .value_inr = 1881376715.86
+      .holding_cost_inr = 150510137.27
+      .pct_of_lines = 43.955
+  - 'No demand' = 2782 SKU lines
+      .value_inr = 348339940.04
+      .definition = stock on hand with zero net demand in the trailing 12 months
+  - 'Understock' = 14631 SKU lines
+      .shortfall_qty = 376841.226
+      .value_inr = 2307183849.66
+      .pct_of_lines = 42.144
+  - 'Vital below ROP' = 1635 SKU lines
+      .vital_lines = 3244
+      .vital_zero_stock = 365
+
+[nm_sm] full card payloads:
+  - 'NM + SM at risk' = 13329 SKU lines
+      .qty = 380674.446
+      .value_inr = 2234742210.94
+      .pct_of_lines = 38.393
+  - 'Value at risk' = 380674.446 base UoM
+      .value_inr = 2234742210.94
+      .holding_cost_inr = 178779376.88
+  - 'Precision' = 0.342941 ratio
+      .basis = engine class vs SAP NM_SM_CLASS, positive = anything not ACTIVE
+  - 'Recall' = 1.0 ratio
+  - 'F1' = 0.510731 ratio
+      .target = 0.9
+      .status = RED
+
+[pr_recommendations] full card payloads:
+  - 'PR lines recommended' = 14631 PR lines
+      .qty = 797479
+  - 'Recommended quantity' = 797479 base UoM
+      .value_inr = 4744629655.45
+  - 'Raise immediately' = 9988 PR lines
+      .value_inr = 3681308830.15
+      .definition = zero weeks of cover after safety stock - raise now
+  - 'Critical priority' = 9471 PR lines
+      .value_inr = 3496939096.42
+  - 'Shutdown-linked' = 2903 PR lines
+      .value_inr = 1172824287.25
+
+[mrp_rop] full card payloads:
+  - 'Lines with an ROP' = 34717 SKU lines
+      .coverage_pct = 100.0
+      .lines_in_scope = 34717
+  - 'MRP type VB' = None SKU lines
+      .status = UNCOMPUTABLE
+      .reason = No MRP-type column exists anywhere in VEDANTA_POC...
+      .missing_field = MRP type (SAP MARC-DISMM)
+  - 'MRP type PD' = None SKU lines
+      .status = UNCOMPUTABLE
+      .reason = No MRP-type column exists anywhere in VEDANTA_POC...
+      .missing_field = MRP type (SAP MARC-DISMM)
+  - 'Within +/-20% of SAP' = 7791 SKU lines
+      .pct = 22.441
+  - 'Increase recommended' = 21673 SKU lines
+      .definition = SAP ROP is more than 20% below the engine ROP
+      .pct = 62.428
+  - 'Decrease recommended' = 5244 SKU lines
+      .definition = SAP ROP is more than 20% above the engine ROP
+      .pct = 15.105
+
+==============================================================================
+G. RAIA — the 12 sub-items the brief names
+==============================================================================
+  OK       engine                 5 keys
+  OK       contextflow_model      10 keys
+  OK       raw_vs_curated         2 keys
+  OK       reconciliation         5 keys
+  OK       accuracy               7 keys
+  OK       limitations            5 items
+  OK       uncomputable_items     9 items
+  OK       assumptions            5 items
+  OK       data_quality           7 keys
+  OK       forecast               4 keys
+  OK       top_risks              7 keys
+  OK       actions                6 items
+
+==============================================================================
+H. CROSS-SECTION AGREEMENT (same number, two places)
+==============================================================================
+  MATCH   VITAL_AVAILABILITY         88.7485  vs  kpi_scorecard/Vital          88.7485
+  MATCH   NM_SM_F1                  0.510731  vs  nm_sm/F1                    0.510731
+  MATCH   NOM_DAYS                    121.66  vs  kpi_scorecard/NOM avg_days     121.66
+  MATCH   stock qty                852059.19  vs  inventory_health/Stock     852059.19
+  MATCH   NOM lines                    15990  vs  inventory_health/NOM           15990
+  MATCH   PR lines                     14631  vs  pr_recommendations/PR lines    14631
+  MATCH   understock==PR lines         14631  vs  pr_recommendations/PR lines    14631
+
+==============================================================================
+REAL GAPS: 0
+COSMETIC (wording only, content present): 4
+  ~ over_understock 'no-demand' -> card exists as 'No demand' (hyphen vs space)
+  ~ nm_sm 'at-risk' -> card exists as 'NM + SM at risk'
+  ~ pr_recommendations 'value' -> value_inr carried as a field on a PR card,
+    not as its own tile
+  ~ mrp_rop 'adjusted' -> expressed as the Increase/Decrease recommended pair
+    (21,673 + 5,244 = adjusted lines)
+VERDICT: NO REAL GAPS
+==============================================================================
