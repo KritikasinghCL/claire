@@ -1,0 +1,245 @@
+{
+  "note": "Verification of the ContextFlow forecast evidence for step 2, read directly from the ContextFlow MCP (AutoML feature) and from SAP HANA VEDANTA_POC by Maya (Scrum Master) on 2026-11-04. Every value below was returned by a tool call; nothing is inferred, estimated or restated from a plan. tools/verify_step2_contextflow.py asserts the published step-2 artefacts against this file.",
+  "verified_at_utc": "2026-11-04T18:11:00Z",
+  "verified_by": "Maya — Scrum Master, Inventory & Forecasting Cell",
+
+  "deliverable_status": {
+    "step2_forecast_json": "ABSENT",
+    "searched": [
+      "workspace filesystem (find / -name 'step2_forecast*' -> no hits)",
+      "github KritikasinghCL/claire path step2/step2_forecast.json -> 404",
+      "git ls-files on the checkout -> step1 artefacts and tools/validate_step1.py only"
+    ],
+    "what_does_exist": [
+      "step2/sql/step2_cohort_history.sql (uncommitted, workspace only)",
+      "step2/tools/fetch_notes.md (uncommitted, workspace only)"
+    ],
+    "conclusion": "S-3 is genuinely in progress. The forecast input grain has been designed and verified; no forecast output artefact has been produced. The ContextFlow evidence below is therefore verified against the deployed experiments directly, not against a step-2 file."
+  },
+
+  "contextflow_engine": {
+    "source": "AutoML capabilities (GET /api/v1/automl/capabilities)",
+    "enabled": true,
+    "statusHint": "AutoML is ready.",
+    "engine_in_use": "onprem",
+    "onprem_available": true,
+    "onprem_detail": "2 CPUs · 0/1 running",
+    "onprem_problem_types": ["binary","multiclass","regression","time_series","multivariate_time_series","clustering","anomaly_detection","quantile_regression"],
+    "unavailable_engines": {
+      "aws": "Set AUTOML_S3_BUCKET to the bucket Autopilot should stage data in.",
+      "gcp": "Connect and validate this workspace's GCP account.",
+      "azure": "Connect and validate this workspace's Azure account."
+    }
+  },
+
+  "experiments_found": 2,
+
+  "experiment_A_authoritative": {
+    "id": "6ae894a219423a530ab79f69",
+    "name": "Demand Regression",
+    "objective": "Predict monthly spare-parts demand (actual_qty) per material and plant for inventory control.",
+    "status": "succeeded",
+    "engine": "onprem",
+    "preset": "fast",
+    "externalJobId": "contextflow-184ddfa1979f4ae2a294",
+    "createdAt": "2026-11-02T13:48:18.002Z",
+    "elapsedSec": 484.2,
+    "domainType": "supply_chain",
+    "candidates_trained": 11,
+    "dataset": {
+      "fileName": "contextflow_small_test_6000rows.csv",
+      "rows": 6000,
+      "cols": 9,
+      "targetColumn": "actual_qty",
+      "problemType": "regression",
+      "featureColumns": ["month","PLANT_ID","CATEGORY","MATERIAL_GROUP","MATERIAL_TYPE","CRITICALITY","MOVEMENT_CLASS","SHUTDOWN_MATERIAL_FLAG"],
+      "primaryMetric": "root_mean_squared_error",
+      "splitStrategy": "deterministic_random_holdout",
+      "holdoutFraction": 0.2,
+      "splitPersisted": true
+    },
+    "winner_verbatim": {
+      "bestCandidateId": "ExtraTreesMSE",
+      "modelFamily": "ExtraTreesMSE",
+      "rank": 1,
+      "artifact_format": "autogluon",
+      "rmse_holdout": 172.503385,
+      "mae": 52.051765,
+      "r2": 0.716757,
+      "score_val": -107.33990194218438,
+      "eval_metric": "root_mean_squared_error",
+      "trainTimeSec": 1.349992,
+      "inferenceLatencyMs": 175.105
+    },
+    "why_it_ranked_first_verbatim": "ContextFlow ranked candidates on the holdout root_mean_squared_error it was given as primaryMetric. ExtraTreesMSE scored 172.503385, the lowest of the 11 candidates; WeightedEnsemble_L2 was second at 174.086569 and NeuralNetTorch third at 178.123274. The margin over second place is 1.583184 RMSE = 0.91%. No model was chosen by a human; bestCandidateId is what the engine returned.",
+    "full_leaderboard_rmse": [
+      {"rank": 1,  "id": "ExtraTreesMSE",       "rmse": 172.503385, "mae": 52.051765,  "r2": 0.716757},
+      {"rank": 2,  "id": "WeightedEnsemble_L2", "rmse": 174.086569, "mae": 44.088502,  "r2": 0.711535},
+      {"rank": 3,  "id": "NeuralNetTorch",      "rmse": 178.123274, "mae": 43.592121,  "r2": 0.698002},
+      {"rank": 4,  "id": "RandomForestMSE",     "rmse": 181.142213, "mae": 49.053176,  "r2": 0.687678},
+      {"rank": 5,  "id": "XGBoost",             "rmse": 191.337482, "mae": 52.373099,  "r2": 0.651532},
+      {"rank": 6,  "id": "LightGBMXT",          "rmse": 194.949254, "mae": 58.026131,  "r2": 0.638252},
+      {"rank": 7,  "id": "LightGBM",            "rmse": 195.900818, "mae": 59.886898,  "r2": 0.634712},
+      {"rank": 8,  "id": "NeuralNetFastAI",     "rmse": 219.572021, "mae": 61.244427,  "r2": 0.541101},
+      {"rank": 9,  "id": "CatBoost",            "rmse": 236.753147, "mae": 60.514130,  "r2": 0.466475},
+      {"rank": 10, "id": "KNeighborsDist",      "rmse": 341.540746, "mae": 133.451528, "r2": -0.110320},
+      {"rank": 11, "id": "KNeighborsUnif",      "rmse": 341.540746, "mae": 133.451528, "r2": -0.110320}
+    ],
+    "holdout_diagnostics_verbatim": {
+      "kind": "regression",
+      "rows": 1200,
+      "wape": 0.477518,
+      "mape": 1.927361,
+      "smape": 1.011118,
+      "rmse": 174.086569,
+      "mae": 44.088502,
+      "medianAbsoluteError": 9.67709,
+      "r2": 0.711535,
+      "bias": -11.11365,
+      "maxAbsoluteError": 3217.399109,
+      "errorPercentiles": {"p50": 9.67709, "p75": 27.802433, "p90": 80.096507, "p95": 165.355498, "p99": 673.07599},
+      "WARNING": "These diagnostics are computed for WeightedEnsemble_L2 (rmse 174.086569, r2 0.711535), NOT for the rank-1 winner ExtraTreesMSE (rmse 172.503385, r2 0.716757). The diagnostics block's rmse/r2 match rank 2 exactly. Any WAPE quoted for 'the ContextFlow model' is therefore the runner-up's WAPE, not the champion's."
+    },
+    "featureImportance": [
+      {"feature": "MOVEMENT_CLASS", "score": 170.343323},
+      {"feature": "MATERIAL_GROUP", "score": 154.389918},
+      {"feature": "month", "score": 117.888255},
+      {"feature": "SHUTDOWN_MATERIAL_FLAG", "score": 81.971743},
+      {"feature": "CATEGORY", "score": 65.864225},
+      {"feature": "MATERIAL_TYPE", "score": 49.450405},
+      {"feature": "CRITICALITY", "score": 33.618450},
+      {"feature": "PLANT_ID", "score": 29.727418}
+    ],
+    "endpoint": {
+      "endpointId": "onprem-contextflow-184ddfa1979f4ae2a294",
+      "status": "in_service",
+      "provider": "onprem",
+      "candidateId": "ExtraTreesMSE",
+      "targetColumn": "actual_qty",
+      "problemType": "regression",
+      "deployedAt": "2026-11-02T14:04:46.892Z",
+      "live_check": "POST predict returned 200 with numeric predictions on 2026-11-04T18:10:21Z — the endpoint serves."
+    }
+  },
+
+  "experiment_B_second_run": {
+    "id": "6ae8a3b619423a530ab79f89",
+    "name": "Demand Regression",
+    "status": "succeeded",
+    "externalJobId": "contextflow-11cdda9889d943d0bc0f",
+    "createdAt": "2026-11-02T14:52:38.715Z",
+    "domainType": "general",
+    "strategy": "curated",
+    "candidates_trained": 3,
+    "modelPlan": ["random_forest","extra_trees","gradient_boosting"],
+    "bestCandidateId": "random_forest_1",
+    "winner_rmse": 232.885196,
+    "holdout_wape": 0.598288,
+    "holdout_r2": 0.483766,
+    "endpoint_status": "in_service",
+    "endpoint_deployedAt": "2026-11-03T12:27:48.308Z",
+    "significance": "A SECOND experiment is deployed and in_service on the same asset and the same analysisId, trained on the same 6,000-row file but with domainType 'general' and a 3-model curated plan. It is materially worse (RMSE 232.885196 vs 172.503385; WAPE 0.598288 vs 0.477518; r2 0.483766 vs 0.716757). Two in_service endpoints exist. The dashboard must name the experiment id it reads, or it can silently serve the weaker model."
+  },
+
+  "validations_required_by_the_brief": {
+    "task_is_regression_not_classification": {
+      "verdict": "PASS",
+      "evidence": "dataset.problemType = 'regression' and endpoint.problemType = 'regression' on both experiments; probabilities = null and decisionThreshold = null on the live predict response; the diagnostics block is kind='regression' with residuals and r2, not a confusion matrix."
+    },
+    "target_is_a_quantity": {
+      "verdict": "PASS",
+      "evidence": "targetColumn = 'actual_qty' on the dataset and on the deployed endpoint; the live predict response returns targetColumn 'actual_qty' with continuous values (1290.1533203125, 10.850000381469727). Holdout actuals include 0 and -1, consistent with a net-demand quantity rather than a class label."
+    },
+    "model_chosen_by_contextflow_not_by_us": {
+      "verdict": "PASS",
+      "evidence": "bestCandidateId is returned by the engine and matches endpoint.candidateId on both experiments. No champion/approve_champion call was made by this cell."
+    },
+    "six_month_holdout": {
+      "verdict": "FAIL",
+      "evidence": "splitStrategy = 'deterministic_random_holdout', holdoutFraction = 0.2, diagnostics rows = 1200 of 6000. That is a RANDOM 20% holdout, not the time-ordered 6-month holdout the brief requires. A random split over a time series leaks future months into training: rows from 2025-12 can sit in train while 2024-03 sits in test. The reported WAPE is therefore an optimistic in-sample-period number and is NOT a 6-month-ahead forecast accuracy.",
+      "what_the_holdout_should_have_been": "2025-07..2025-12, which in the verified step-2 grain is 5,283 of 30,861 cohort-month rows (17.12%) and 937,113.778 base UoM of net demand."
+    },
+    "horizons_3_6_9_12": {
+      "verdict": "NOT EVIDENCED",
+      "evidence": "No horizon parameter exists anywhere on either experiment. The model is a tabular regressor over a 'month' feature, not a horizon-aware forecaster. Horizons can only be produced by calling predict once per future month; nothing in ContextFlow records them."
+    },
+    "grain_material_x_plant_x_month": {
+      "verdict": "FAIL — the deployed model cannot express it",
+      "evidence": "featureColumns do not include MATERIAL_ID. Confirmed empirically: two predict rows identical except MATERIAL_ID 'MAT-000001' vs 'MAT-005999' both returned 1290.1533203125 — byte-identical. The model is blind to material. The finest grain it can distinguish is the 7-way cohort (PLANT x CATEGORY x MATERIAL_GROUP x MATERIAL_TYPE x CRITICALITY x MOVEMENT_CLASS x SHUTDOWN_FLAG), which HANA confirms is 2,027 distinct cohorts covering 34,717 material-plant lines. The step-2 SQL header states this limitation and is correct to do so.",
+      "consequence_for_the_dashboard": "The brief's SUCCESS criterion — drill Plant -> Material Type -> Material Group -> Material and see a forecast quantity — cannot be met at the Material level from this model. A material-level number would be the cohort number repeated, and must be labelled as an allocation, not a forecast."
+    },
+    "metrics_wape_mape_rmse": {
+      "verdict": "PARTIAL",
+      "wape": 0.477518,
+      "rmse": 174.086569,
+      "mape": 1.927361,
+      "caveat_rmse": "WAPE and the rmse in the diagnostics block belong to WeightedEnsemble_L2 (rank 2). The champion ExtraTreesMSE's own holdout RMSE is 172.503385 and r2 0.716757.",
+      "caveat_mape": "MAPE is UNCOMPUTABLE on this data. The leaderboard's own mean_absolute_percentage_error for every candidate is of order 1e15 to 5e16 (e.g. ExtraTreesMSE 1.85e15) because the target contains zeros — HANA confirms 154 zero and 242 negative cohort-months in the in-scope grain. The diagnostics MAPE of 1.927361 is computed on a different denominator set. Report WAPE; label MAPE UNCOMPUTABLE with this reason."
+    },
+    "dimensions_plant_materialtype_materialgroup_material": {
+      "verdict": "PARTIAL",
+      "evidence": "PLANT_ID, MATERIAL_TYPE, MATERIAL_GROUP are all featureColumns and are used (importance 29.727418 / 49.450405 / 154.389918). MATERIAL is absent — see grain finding above."
+    },
+    "qty_accuracy_kpi_1_minus_wape": {
+      "verdict": "COMPUTABLE BUT FAILS TARGET",
+      "value": 0.522482,
+      "arithmetic": "1 - 0.477518 = 0.522482 = 52.2%",
+      "target": "> 90% (brief KPI 'Inventory Forecast >90%')",
+      "status": "RED — 52.2% against a >90% target, and that is the optimistic random-split figure, not a 6-month-ahead one."
+    }
+  },
+
+  "extrapolation_test": {
+    "method": "Identical cohort, month varied, against the live endpoint 6ae894a219423a530ab79f69.",
+    "results": [
+      {"month": "2024-06", "prediction": 786.4199829101562},
+      {"month": "2025-06", "prediction": 1269.6099853515625},
+      {"month": "2025-12", "prediction": 1268.1966552734375},
+      {"month": "2026-01", "prediction": 1290.1533203125},
+      {"month": "2026-02", "prediction": 1349.18994140625},
+      {"month": "2026-06", "prediction": 1397.11669921875},
+      {"month": "2026-12", "prediction": 1325.9466552734375},
+      {"month": "2030-06", "prediction": 1443.4033203125},
+      {"month": "2099-06", "prediction": 1397.11669921875}
+    ],
+    "finding": "The model accepts months outside the 2024-01..2025-12 training range without error and returns plausible-looking numbers. 2099-06 returns 1397.11669921875 — exactly the same value as 2026-06. A tree ensemble cannot extrapolate beyond its training range; it flattens onto the nearest learned leaf. Forward months are not trend-extrapolated, they are the nearest in-sample month's leaf value.",
+    "consequence": "Forward forecasts from this model are a seasonal/level replay of 2024-2025, not a projection. A 12-month-ahead number carries no more information than a 1-month-ahead one. This must be stated on the Demand Forecast page; a silent forward curve would be misleading."
+  },
+
+  "hana_reverification_of_the_step2_grain": {
+    "note": "The step-2 SQL header makes four quantitative claims. All four were re-run independently against HANA.",
+    "claims_checked": [
+      {"claim": "SUM(Q) = 3,088,369.252 and equals step1 net_demand_qty_total", "hana_returned": "3088369.252", "verdict": "PASS — exact"},
+      {"claim": "2,027 cohorts", "hana_returned": 2027, "verdict": "PASS — exact"},
+      {"claim": "30,861 cohort-month rows", "hana_returned": 30861, "verdict": "PASS — exact"},
+      {"claim": "ALL_PLANTS excluded via the MATERIAL_PLANT_CLASSIFICATION join", "hana_returned": "0 rows with PLANT_ID='ALL_PLANTS'", "verdict": "PASS"},
+      {"claim": "24 months covered", "hana_returned": 24, "verdict": "PASS"},
+      {"claim": "the 7-way cohort is the finest grain the model can distinguish and covers the whole estate", "hana_returned": "34,717 material-plant lines collapse to exactly 2,027 distinct cohorts", "verdict": "PASS — the cohort count derived from MATERIAL_PLANT_CLASSIFICATION independently equals the cohort count derived from the movement fact"},
+      {"claim": "CATEGORY_MAP has 12 pairs / 5 business categories, FASTENERS -> Mechanical Spares, FILTERS -> Consumables & Lubricants", "hana_returned": "12 rows, 5 distinct categories, FASTENERS=Mechanical Spares, FILTERS=Consumables & Lubricants", "verdict": "PASS — all 12 pairs match the note verbatim"}
+    ],
+    "additional_facts_for_step_3": {
+      "cohort_month_rows_with_zero_net_demand": 154,
+      "cohort_month_rows_with_negative_net_demand": 242,
+      "negative_rows_meaning": "months where 262 reversals exceeded 261 issues; they are real and must not be clipped to zero without saying so",
+      "time_ordered_holdout_2025_07_to_2025_12": {"rows": 5283, "share_of_grain_pct": 17.12, "net_qty": 937113.778}
+    }
+  },
+
+  "verdict": {
+    "overall": "BLOCKED — the ContextFlow evidence does not yet support the forecast the brief specifies.",
+    "what_is_sound": [
+      "The forecast INPUT grain is correct and reconciles to step 1 to the decimal.",
+      "ContextFlow is the engine; the model was selected by the engine on a declared metric; the task is regression and the target is a quantity. All three brief validations pass.",
+      "The champion endpoint is live and serving."
+    ],
+    "blocking_defects": [
+      "D1 — holdout is a random 20% split, not the required time-ordered 6-month holdout. Reported accuracy is optimistic and is not forecast accuracy.",
+      "D2 — the published WAPE/RMSE in the diagnostics block belong to rank 2 (WeightedEnsemble_L2), not to the rank-1 champion (ExtraTreesMSE). Quoting them as 'the model's accuracy' is wrong.",
+      "D3 — MATERIAL_ID is not a feature. Material-level forecasts are impossible; the SUCCESS drill-down cannot be met at the Material level from this model.",
+      "D4 — tree ensemble cannot extrapolate. 2099-06 returns the same number as 2026-06. Forward horizons are a replay, not a projection.",
+      "D5 — two in_service endpoints on the same asset with a 35% RMSE gap. The dashboard must pin an experiment id.",
+      "D6 — Qty Accuracy (1-WAPE) is 52.2% against a >90% target, on the optimistic split."
+    ],
+    "recommended_resolution": "Re-run the experiment with a time-ordered holdout on 2025-07..2025-12 and MATERIAL_ID either added as a feature or the material grain formally descoped and labelled. Until then no forecast number should reach the dashboard without the banner the brief requires."
+  }
+}
